@@ -5,16 +5,15 @@ import numpy
 # Parameters
 ############
 discount_factor = 0.9
-alpha = 0.3
+alpha = 0.5
 exploration_chance = 0.05
 render = False
-step_size = 0.5
 # Originally 200
-steps_per_episode = 300
-training_episodes = 500
+steps_per_episode = 500
+training_episodes = 2000
 # Tile configuration
-position_levels = 20
-velocity_levels = 20
+position_levels = 50
+velocity_levels = 50
 
 # Override episode length
 gym.envs.register(
@@ -41,10 +40,13 @@ def policy(state):
     if rand.random() < exploration_chance:
         return rand.choice(actions)
     else:
+        #if len(set(Q[state])) == 1:
+         #   return numpy.random.randint(0,2)
         return numpy.argmax(Q[state])
 
 def update_rule(state, action, next_state, next_action, reward):
-    Q[state][action] += Q[state][action] + alpha * (reward + discount_factor * Q[next_state][next_action] - Q[state][action])
+    update_value = Q[state][action] + alpha * (reward + discount_factor * Q[next_state][next_action] - Q[state][action])
+    Q[state][action] = update_value
 
 for episode in range(training_episodes):
     observation = env.reset()
@@ -54,7 +56,8 @@ for episode in range(training_episodes):
     step = 0
     total_reward = 0
     done = False
-
+    #if episode % 5 == 0 and exploration_chance > .05:
+     #   exploration_chance -= 0.05
     while not done:
         step += 1
         observation, reward, done, info = env.step(action)
