@@ -1,13 +1,14 @@
 import gym
 import numpy
-import self as self
+import tqdm
 
 
 class qlearningModel:
     ############
     # Parameters
     ############
-    def __init__(self, discount_factor, alpha, max_steps, training_episodes, pl, vl, render=False):
+    def __init__(self, discount_factor, alpha, max_steps, training_episodes, pl, vl, render=False, headless=False):
+        self.headless = headless
         self.discount_factor = discount_factor
         self.alpha = alpha
         self.exploration_chance = 0.05
@@ -56,8 +57,9 @@ class qlearningModel:
         self.Q[state][action] = update_value
 
     def run(self):
-
-        for episode in range(self.training_episodes):
+        print("Running model:")
+        reward_values = []
+        for episode in tqdm.trange(self.training_episodes):
             observation = self.env.reset()
             state = self.tile(observation)
             action = self.policy(state)
@@ -78,7 +80,10 @@ class qlearningModel:
 
                 state = next_state
                 action = next_action
-            print('Episode %d: Reward %d after %d steps' % (episode, total_reward, step))
+            reward_values.append(abs(total_reward))
+            if self.headless:
+                print('Episode %d: Reward %d after %d steps' % (episode, total_reward, step))
             if step < 200:
                 self.good_runs += 1
         print("Runs under 200 steps: %d" % self.good_runs)
+        return reward_values
