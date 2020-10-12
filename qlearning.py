@@ -7,15 +7,14 @@ class qlearningModel:
     ############
     # Parameters
     ############
-    def __init__(self, discount_factor, alpha, max_steps, training_episodes, pl, vl, render=False, headless=False):
+    def __init__(self, discount_factor, alpha, training_episode, pl, vl, render=False, headless=False):
         self.headless = headless
         self.discount_factor = discount_factor
         self.alpha = alpha
         self.exploration_chance = 0.05
         self.render = render
         # Originally 200
-        self.steps_per_episode = max_steps
-        self.training_episodes = training_episodes
+        self.training_episode = training_episode
         # Tile configuration
         self.position_levels = pl
         self.velocity_levels = vl
@@ -25,7 +24,7 @@ class qlearningModel:
         gym.envs.register(
             id='MountainCar-CustomLength-v0',
             entry_point='gym.envs.classic_control:MountainCarEnv',
-            max_episode_steps=self.steps_per_episode,
+           # max_episode_steps=self.steps_per_episode,
             reward_threshold=-110.0,
         )
         self.env = gym.make('MountainCar-CustomLength-v0')
@@ -33,11 +32,12 @@ class qlearningModel:
                                        self.position_levels)
         self.velocity_bins = numpy.linspace(self.env.observation_space.low[1], self.env.observation_space.high[1],
                                        self.velocity_levels)
-        self.good_runs = 0
         self.rand = numpy.random.default_rng()
 
     # Override episode length
 
+    def resetQ(self):
+        self.Q = [[0 for _ in self.actions] for _ in range(self.position_levels * self.velocity_levels)]
 
     def tile(self, observation: numpy.ndarray) -> numpy.int64:
         """Convert a continuous position and velocity to a discrete tile."""
@@ -56,14 +56,18 @@ class qlearningModel:
                                                         self.Q[state][action])
         self.Q[state][action] = update_value
 
-    def run(self):
+    def run(self, max_steps):
+        good_runs = 0
+        first_under = 0
+        best_score = -99999
+        self.env._max_episode_steps = max_steps
+        self.resetQ()
         print("Running model:")
         reward_values = []
-        for episode in tqdm.trange(self.training_episodes):
+        for episode in tqdm.trange(self.training_episode):
             observation = self.env.reset()
             state = self.tile(observation)
             action = self.policy(state)
-
             step = 0
             total_reward = 0
             done = False
@@ -83,7 +87,12 @@ class qlearningModel:
             reward_values.append(abs(total_reward))
             if self.headless:
                 print('Episode %d: Reward %d after %d steps' % (episode, total_reward, step))
+            if total_reward > best_score:
+                best_score = total_reward
             if step < 200:
-                self.good_runs += 1
-        print("Runs under 200 steps: %d" % self.good_runs)
-        return reward_values
+                good_runs += 1
+                if first_under == 0:
+                    first_under = episode
+
+        print("Runs under 200 steps: %d" % good_runs)
+        return reward_values, first_under, best_score
