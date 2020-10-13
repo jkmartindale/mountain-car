@@ -24,7 +24,7 @@ class qlearningModel:
         gym.envs.register(
             id='MountainCar-CustomLength-v0',
             entry_point='gym.envs.classic_control:MountainCarEnv',
-           # max_episode_steps=self.steps_per_episode,
+            max_episode_steps=1000,
             reward_threshold=-110.0,
         )
         self.env = gym.make('MountainCar-CustomLength-v0')
@@ -73,6 +73,8 @@ class qlearningModel:
             done = False
             #if episode % 5 == 0 and exploration_chance > .05:
              #   exploration_chance -= 0.05
+            if episode == 4500:
+                self.env.render()
             while not done:
                 step += 1
                 observation, reward, done, info = self.env.step(action)
@@ -84,7 +86,7 @@ class qlearningModel:
 
                 state = next_state
                 action = next_action
-            reward_values.append(abs(total_reward))
+            reward_values.append(total_reward)
             if self.headless:
                 print('Episode %d: Reward %d after %d steps' % (episode, total_reward, step))
             if total_reward > best_score:
@@ -95,4 +97,4 @@ class qlearningModel:
                     first_under = episode
 
         print("Runs under 200 steps: %d" % good_runs)
-        return reward_values, first_under, best_score
+        return reward_values, first_under, best_score, good_runs
