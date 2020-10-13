@@ -35,7 +35,7 @@ class qlearningModel:
         self.rand = numpy.random.default_rng()
 
     # Override episode length
-
+    '''Resets the state values for multiple runs'''
     def resetQ(self):
         self.Q = [[0 for _ in self.actions] for _ in range(self.position_levels * self.velocity_levels)]
 
@@ -43,14 +43,14 @@ class qlearningModel:
         """Convert a continuous position and velocity to a discrete tile."""
         return numpy.digitize(observation[0], self.position_bins) * self.velocity_levels + numpy.digitize(observation[1], self.velocity_bins)
 
+    '''Defines the policy that guides that car'''
     def policy(self, state):
         if self.rand.random() < self.exploration_chance:
             return self.rand.choice(self.actions)
         else:
-            #if len(set(Q[state])) == 1:
-             #   return numpy.random.randint(0,2)
             return numpy.argmax(self.Q[state])
 
+    '''Update rule in line with the Q-Learning algorithm'''
     def update_rule(self, state, action, next_state, next_action, reward):
         update_value = self.Q[state][action] + self.alpha * (reward + self.discount_factor * self.Q[next_state][next_action] -
                                                         self.Q[state][action])
@@ -64,6 +64,7 @@ class qlearningModel:
         self.resetQ()
         print("Running model:")
         reward_values = []
+        '''Runs for the specified episodes, also displays progress bar'''
         for episode in tqdm.trange(self.training_episode):
             observation = self.env.reset()
             state = self.tile(observation)
@@ -71,21 +72,24 @@ class qlearningModel:
             step = 0
             total_reward = 0
             done = False
+            '''Exploration decay, not used in final version'''
             #if episode % 5 == 0 and exploration_chance > .05:
              #   exploration_chance -= 0.05
-            if episode == 4500:
-                self.env.render()
+            '''Goes until max steps or the car wins'''
             while not done:
                 step += 1
+                '''Moves car based on action'''
                 observation, reward, done, info = self.env.step(action)
-
+                '''Gets resulting state'''
                 next_state = self.tile(observation)
                 next_action = self.policy(next_state)
+                '''Updates reward and state,action values'''
                 total_reward += reward
                 self.update_rule(state, action, next_state, next_action, reward)
-
+                '''Updates current state and action'''
                 state = next_state
                 action = next_action
+            '''Gets metrics for the current episode'''
             reward_values.append(total_reward)
             if self.headless:
                 print('Episode %d: Reward %d after %d steps' % (episode, total_reward, step))
@@ -95,6 +99,5 @@ class qlearningModel:
                 good_runs += 1
                 if first_under == 0:
                     first_under = episode
-
         print("Runs under 200 steps: %d" % good_runs)
         return reward_values, first_under, best_score, good_runs
