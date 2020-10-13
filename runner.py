@@ -12,7 +12,7 @@ firstScoreList = []
 goodScoreList = []
 '''Specifies max steps per episode'''
 maxSteps = int(input("Enter max steps per episode: "))
-
+numRuns = int(input("Enter number of trial runs: "))
 '''Runs model multiple times and gets statistics'''
 for i in range(1):
     shortRewards, firstScore, bestScore, goodScore = model.run(maxSteps)
