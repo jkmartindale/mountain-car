@@ -2,7 +2,8 @@ import qlearning
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-
+'''Author: Andrew Swaim
+   Date: 10/10/2020'''
 '''Creates the model with the hyperparameter values'''
 model = qlearning.qlearningModel(0.9, 0.2, 5000, 40, 40)
 shortRewards = []

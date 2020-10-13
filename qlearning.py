@@ -1,7 +1,8 @@
 import gym
 import numpy
 import tqdm
-
+'''Author: Andrew Swaim
+   Date: 10/10/2020'''
 
 class qlearningModel:
     ############
